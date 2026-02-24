@@ -6,15 +6,6 @@ app = Flask(__name__)
 
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-MAX_FILES = 7  # keep only the 7 most recent images
-
-# --- Function to clean up old files ---
-def cleanup_uploads():
-    images = [f for f in os.listdir(UPLOAD_FOLDER) if f.lower().endswith((".png", ".jpg", ".jpeg", ".gif"))]
-    images.sort()  # oldest first
-    while len(images) > MAX_FILES:
-        os.remove(os.path.join(UPLOAD_FOLDER, images[0]))
-        images.pop(0)
 
 # --- Upload route ---
 @app.route("/upload", methods=["POST"])
@@ -32,10 +23,6 @@ def upload():
     file.save(filepath)
 
     print("Saved:", filename)
-
-    # Clean up old files to keep only MAX_FILES
-    cleanup_uploads()
-
     return "OK", 200
 
 # --- Serve individual files ---
@@ -46,7 +33,8 @@ def uploaded_file(filename):
 # --- API endpoint returning all image filenames ---
 @app.route("/api/images")
 def api_images():
-    images = [f for f in os.listdir(UPLOAD_FOLDER) if f.lower().endswith((".png", ".jpg", ".jpeg", ".gif"))]
+    images = os.listdir(UPLOAD_FOLDER)
+    images = [f for f in images if f.lower().endswith((".png", ".jpg", ".jpeg", ".gif"))]
     images.sort(reverse=True)  # newest first
     return jsonify(images)
 
