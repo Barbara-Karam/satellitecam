@@ -1,30 +1,36 @@
 from flask import Flask, request, send_from_directory, render_template_string, jsonify
 import os
+from datetime import datetime
 
 app = Flask(__name__)
 
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Upload route
+# --- Upload route ---
 @app.route("/upload", methods=["POST"])
 def upload():
     if 'imageFile' not in request.files:
         return "No file", 400
 
     file = request.files['imageFile']
-    filepath = os.path.join(UPLOAD_FOLDER, file.filename)
+
+    # Make filename unique with timestamp
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S%f")
+    filename = f"{timestamp}_{file.filename}"
+
+    filepath = os.path.join(UPLOAD_FOLDER, filename)
     file.save(filepath)
 
-    print("Saved:", file.filename)
+    print("Saved:", filename)
     return "OK", 200
 
-# Serve individual files
+# --- Serve individual files ---
 @app.route("/uploads/<filename>")
 def uploaded_file(filename):
     return send_from_directory(UPLOAD_FOLDER, filename)
 
-# API endpoint that returns all image filenames as JSON
+# --- API endpoint returning all image filenames ---
 @app.route("/api/images")
 def api_images():
     images = os.listdir(UPLOAD_FOLDER)
@@ -32,7 +38,7 @@ def api_images():
     images.sort(reverse=True)  # newest first
     return jsonify(images)
 
-# Gallery page with live updates
+# --- Gallery page with live updates ---
 @app.route("/")
 def gallery():
     html = """
@@ -84,3 +90,6 @@ def gallery():
     </html>
     """
     return render_template_string(html)
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)
