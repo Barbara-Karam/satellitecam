@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, send_from_directory
 import os
 
 app = Flask(__name__)
@@ -14,7 +14,13 @@ def upload():
     file = request.files['imageFile']
     filepath = os.path.join(UPLOAD_FOLDER, file.filename)
     file.save(filepath)
+
+    print("Saved:", file.filename)  # ✅ shows in Render logs
     return "OK", 200
+
+@app.route("/uploads/<filename>")
+def uploaded_file(filename):
+    return send_from_directory(UPLOAD_FOLDER, filename)
 
 @app.route("/")
 def home():
